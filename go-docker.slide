@@ -1,0 +1,121 @@
+Building Efficient Docker Images for Go
+_LIGHTNING_ Talk!!
+16 Nov 2017
+Tags: golang, docker
+
+Ian Crosby
+@idcrosby
+
+* Building efficient Docker images for Go with multistage builds
+
+* GoLang + Docker = ❤️
+
+* Use a very simple application
+
+.code code/hello.go /START OMIT/,/END OMIT/
+
+: go build -o simpleApp
+: ls -la
+
+: 5.8 MB… yeah well, we’re used to this in Go
+
+* Playing with Docker
+
+.code code/Dockerfile 
+
+: docker build -t simple:v0 .
+: docker images
+
+
+* 739 MB!!?!?!
+
+.image img/fatGopher.png
+
+* This is not what I was promised….
+
+What’s in there? This is why we run Go and not Javascript! Among many other reasons
+
+We don’t need all these Go Tools at run time!!
+
+* BUT!  
+
+Immutable Infrastructure!
+I still want to leverage containers for my build
+
+Before, we could hack this, but since Docker 17.06 CE we have….
+
+* Multi-stage Builds!!
+
+.code code/Dockerfile-multi
+
+: docker build -t simple:v1 -f Dockerfile-multi .
+
+* woot!
+
+.image img/skinnyGopher.png
+
+: Run… same thing! 1/10th the size. Slim and fit Gopher!
+
+* Size == time
+
+We need to move these things around
+
+: time docker push simple:v0
+: time docker push simepl:v1
+
+* This is clogging up your pipeline!
+
+.image img/cloggedPipe.jpg
+
+* You’re probably saying “This is an amazing improvement, I don’t need any other motivation to adopt this process"
+
+* But you get one anyway! 
+
+What about Security?
+
+* Clair 
+
+.image img/clair.jpeg
+
+: Scan docker images for vulnerability
+
+: (have clair up and running already)
+
+: docker-compose exec clairctl clairctl analyze icrosby/hello-test:v0
+
+* 
+
+Image: docker.io/icrosby/hello-test:v0
+ 12 layers found
+
+  ➜ Analysis [sha256:da19a] found 175 vulnerabilities.
+  ➜ Analysis [sha256:da19a] found 175 vulnerabilities.
+  ➜ Analysis [sha256:4e979] found 175 vulnerabilities.
+  ➜ Analysis [sha256:ed0e7] found 175 vulnerabilities.
+  ➜ Analysis [sha256:85a9b] found 175 vulnerabilities.
+  ➜ Analysis [sha256:3b8a1] found 175 vulnerabilities.
+  ➜ Analysis [sha256:e1989] found 175 vulnerabilities.
+  ➜ Analysis [sha256:2a43f] found 175 vulnerabilities.
+  ➜ Analysis [sha256:93bd1] found 50 vulnerabilities.
+  ➜ Analysis [sha256:a4ca6] found 39 vulnerabilities.
+  ➜ Analysis [sha256:fdfb5] found 37 vulnerabilities.
+  ➜ Analysis [sha256:3e17c] found 27 vulnerabilities.
+
+THAT IS SCARY!
+
+: docker-compose exec clairctl clairctl analyze icrosby/hello-test:v1
+
+* 
+
+Image: docker.io/icrosby/hello-test:v1
+ 1 layers found
+
+  ➜ Analysis [sha256:d79ec] found 0 vulnerabilities.
+
+So SAFE!
+
+* 
+
+.image img/evilGopher.jpg
+
+Thanks!
